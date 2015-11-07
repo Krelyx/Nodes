@@ -20,43 +20,44 @@
 #include <TimerOne.h>
 #include "Ydle.h"
 #include <avr/eeprom.h>
-
-
+#include "Float.h"
+#include "dataStructures.h"
 
 const PROGMEM prog_uchar _atm_crc8_table[256] = {
-    0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15,
-    0x38, 0x3F, 0x36, 0x31, 0x24, 0x23, 0x2A, 0x2D,
-    0x70, 0x77, 0x7E, 0x79, 0x6C, 0x6B, 0x62, 0x65,
-    0x48, 0x4F, 0x46, 0x41, 0x54, 0x53, 0x5A, 0x5D,
-    0xE0, 0xE7, 0xEE, 0xE9, 0xFC, 0xFB, 0xF2, 0xF5,
-    0xD8, 0xDF, 0xD6, 0xD1, 0xC4, 0xC3, 0xCA, 0xCD,
-    0x90, 0x97, 0x9E, 0x99, 0x8C, 0x8B, 0x82, 0x85,
-    0xA8, 0xAF, 0xA6, 0xA1, 0xB4, 0xB3, 0xBA, 0xBD,
-    0xC7, 0xC0, 0xC9, 0xCE, 0xDB, 0xDC, 0xD5, 0xD2,
-    0xFF, 0xF8, 0xF1, 0xF6, 0xE3, 0xE4, 0xED, 0xEA,
-    0xB7, 0xB0, 0xB9, 0xBE, 0xAB, 0xAC, 0xA5, 0xA2,
-    0x8F, 0x88, 0x81, 0x86, 0x93, 0x94, 0x9D, 0x9A,
-    0x27, 0x20, 0x29, 0x2E, 0x3B, 0x3C, 0x35, 0x32,
-    0x1F, 0x18, 0x11, 0x16, 0x03, 0x04, 0x0D, 0x0A,
-    0x57, 0x50, 0x59, 0x5E, 0x4B, 0x4C, 0x45, 0x42,
-    0x6F, 0x68, 0x61, 0x66, 0x73, 0x74, 0x7D, 0x7A,
-    0x89, 0x8E, 0x87, 0x80, 0x95, 0x92, 0x9B, 0x9C,
-    0xB1, 0xB6, 0xBF, 0xB8, 0xAD, 0xAA, 0xA3, 0xA4,
-    0xF9, 0xFE, 0xF7, 0xF0, 0xE5, 0xE2, 0xEB, 0xEC,
-    0xC1, 0xC6, 0xCF, 0xC8, 0xDD, 0xDA, 0xD3, 0xD4,
-    0x69, 0x6E, 0x67, 0x60, 0x75, 0x72, 0x7B, 0x7C,
-    0x51, 0x56, 0x5F, 0x58, 0x4D, 0x4A, 0x43, 0x44,
-    0x19, 0x1E, 0x17, 0x10, 0x05, 0x02, 0x0B, 0x0C,
-    0x21, 0x26, 0x2F, 0x28, 0x3D, 0x3A, 0x33, 0x34,
-    0x4E, 0x49, 0x40, 0x47, 0x52, 0x55, 0x5C, 0x5B,
-    0x76, 0x71, 0x78, 0x7F, 0x6A, 0x6D, 0x64, 0x63,
-    0x3E, 0x39, 0x30, 0x37, 0x22, 0x25, 0x2C, 0x2B,
-    0x06, 0x01, 0x08, 0x0F, 0x1A, 0x1D, 0x14, 0x13,
-    0xAE, 0xA9, 0xA0, 0xA7, 0xB2, 0xB5, 0xBC, 0xBB,
-    0x96, 0x91, 0x98, 0x9F, 0x8A, 0x8D, 0x84, 0x83,
-    0xDE, 0xD9, 0xD0, 0xD7, 0xC2, 0xC5, 0xCC, 0xCB,
-    0xE6, 0xE1, 0xE8, 0xEF, 0xFA, 0xFD, 0xF4, 0xF3
+		0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15,
+		0x38, 0x3F, 0x36, 0x31, 0x24, 0x23, 0x2A, 0x2D,
+		0x70, 0x77, 0x7E, 0x79, 0x6C, 0x6B, 0x62, 0x65,
+		0x48, 0x4F, 0x46, 0x41, 0x54, 0x53, 0x5A, 0x5D,
+		0xE0, 0xE7, 0xEE, 0xE9, 0xFC, 0xFB, 0xF2, 0xF5,
+		0xD8, 0xDF, 0xD6, 0xD1, 0xC4, 0xC3, 0xCA, 0xCD,
+		0x90, 0x97, 0x9E, 0x99, 0x8C, 0x8B, 0x82, 0x85,
+		0xA8, 0xAF, 0xA6, 0xA1, 0xB4, 0xB3, 0xBA, 0xBD,
+		0xC7, 0xC0, 0xC9, 0xCE, 0xDB, 0xDC, 0xD5, 0xD2,
+		0xFF, 0xF8, 0xF1, 0xF6, 0xE3, 0xE4, 0xED, 0xEA,
+		0xB7, 0xB0, 0xB9, 0xBE, 0xAB, 0xAC, 0xA5, 0xA2,
+		0x8F, 0x88, 0x81, 0x86, 0x93, 0x94, 0x9D, 0x9A,
+		0x27, 0x20, 0x29, 0x2E, 0x3B, 0x3C, 0x35, 0x32,
+		0x1F, 0x18, 0x11, 0x16, 0x03, 0x04, 0x0D, 0x0A,
+		0x57, 0x50, 0x59, 0x5E, 0x4B, 0x4C, 0x45, 0x42,
+		0x6F, 0x68, 0x61, 0x66, 0x73, 0x74, 0x7D, 0x7A,
+		0x89, 0x8E, 0x87, 0x80, 0x95, 0x92, 0x9B, 0x9C,
+		0xB1, 0xB6, 0xBF, 0xB8, 0xAD, 0xAA, 0xA3, 0xA4,
+		0xF9, 0xFE, 0xF7, 0xF0, 0xE5, 0xE2, 0xEB, 0xEC,
+		0xC1, 0xC6, 0xCF, 0xC8, 0xDD, 0xDA, 0xD3, 0xD4,
+		0x69, 0x6E, 0x67, 0x60, 0x75, 0x72, 0x7B, 0x7C,
+		0x51, 0x56, 0x5F, 0x58, 0x4D, 0x4A, 0x43, 0x44,
+		0x19, 0x1E, 0x17, 0x10, 0x05, 0x02, 0x0B, 0x0C,
+		0x21, 0x26, 0x2F, 0x28, 0x3D, 0x3A, 0x33, 0x34,
+		0x4E, 0x49, 0x40, 0x47, 0x52, 0x55, 0x5C, 0x5B,
+		0x76, 0x71, 0x78, 0x7F, 0x6A, 0x6D, 0x64, 0x63,
+		0x3E, 0x39, 0x30, 0x37, 0x22, 0x25, 0x2C, 0x2B,
+		0x06, 0x01, 0x08, 0x0F, 0x1A, 0x1D, 0x14, 0x13,
+		0xAE, 0xA9, 0xA0, 0xA7, 0xB2, 0xB5, 0xBC, 0xBB,
+		0x96, 0x91, 0x98, 0x9F, 0x8A, 0x8D, 0x84, 0x83,
+		0xDE, 0xD9, 0xD0, 0xD7, 0xC2, 0xC5, 0xCC, 0xCB,
+		0xE6, 0xE1, 0xE8, 0xEF, 0xFA, 0xFD, 0xF4, 0xF3
 };
+
 
 
 static Frame_t g_m_receivedframe;  // received frame
@@ -69,7 +70,6 @@ static uint8_t pinRx = 12;		// Le numéro de la broche IO utilisée pour le modu
 static uint8_t pinTx = 10;		// Le numéro de la broche IO utilisée pour le module émetteur
 static uint8_t pinLed = 13;		// Le numéro de la broche IO utilisée pour la Led de statut
 static uint8_t pinCop = 8;		// Permet la recopie du signal sur une sortie pour vérification à l'oscilloscope
-static uint8_t pinButton = 3;	// Le numéro de la broche IO utilisée pour l'installation du boutton de resettage
 
 static uint8_t start_bit2 = 0b01000010; // Octet de start
 
@@ -119,6 +119,15 @@ static  bool bit_test = false;
 volatile uint8_t frameToSend[40];
 volatile uint8_t frameToSendLength = 0;
 
+static bool cmdON = false ;
+static bool cmdOFF = false ;
+static bool cmdSet = false ;
+static bool cmdAskData = false ;
+bool isRead = false ;
+
+ uint8_t receivedCommand = 0 ;
+ uint8_t receivednid = 0;
+
 // Catch function for interrupt the reset button
 void reset(){
 #ifdef _YDLE_DEBUG
@@ -136,7 +145,7 @@ void ydle::resetNode(){
 }
 
 // Initialisation des IO avec des valeurs entrées par l'utilisateur
-ydle::ydle(int rx, int tx, int button)
+ydle::ydle(int rx, int tx)
 {
 	m_bLnkSignalReceived = false;
 	m_initializedState = false;
@@ -147,7 +156,7 @@ ydle::ydle(int rx, int tx, int button)
 	pinMode(tx, OUTPUT);
 	pinTx = tx;
 	//pinMode(button, INPUT);
-	pinButton = button;
+	//pinButton = button;
 	pinMode(pinLed, OUTPUT);
 	//attachInterrupt(1, reset, RISING);
 	pinMode(5, OUTPUT);
@@ -163,7 +172,7 @@ ydle::ydle()
 	readEEProm();
 	pinMode(pinRx, INPUT);
 	pinMode(pinTx, OUTPUT);
-	pinMode(pinButton, INPUT);
+	//pinMode(pinButton, INPUT);
 	pinMode(pinLed, OUTPUT);
 	// Permet la recopie du signal sur une sortie pour vérification é l'oscilloscope
 	//pinMode(pinCop, OUTPUT);
@@ -173,7 +182,6 @@ ydle::ydle()
 void ydle::init_timer(){
 	Timer1.initialize(YDLE_FBIT); // set a timer of length YDLE_FBIT microseconds
 	Timer1.attachInterrupt( timerInterrupt ); // attach the service routine here
-
 }
 
 void timerInterrupt(){
@@ -182,20 +190,37 @@ void timerInterrupt(){
 		{
 			rx_done = false;
 		}
-		sample_value = digitalRead(pinRx);
+		sample_value = (PINB & (1<<PB4));
 		pll();
 	}
 	if(transmission_on){
 		if(tx_sample == 0){
-		    if (bit_test ==0){
-		      digitalWrite(pinTx, frameToSend[tx_index]& 1<<tx_bit);
-		      bit_test = true;
-		    }
-		    else {
-		    	digitalWrite(pinTx, !(frameToSend[tx_index]& 1<<tx_bit));
-		    	bit_test = false;
-		    	tx_bit--;
-		    }
+			if (bit_test ==0){
+				digitalWrite(pinTx, frameToSend[tx_index]& 1<<tx_bit);
+				/*if ((frameToSend[tx_index]& 1<<tx_bit) == 1)
+				{
+					PORTB |= (1<<PB2); //digitalWrite(pinTx, HIGH);
+				}
+				else
+				{
+					PORTB &= ~(1<<PB2);//digitalWrite(pinTx, LOW),
+				}*/
+				bit_test = true;
+			}
+			else {
+				digitalWrite(pinTx, !(frameToSend[tx_index]& 1<<tx_bit));
+				/*if ((frameToSend[tx_index]& 1<<tx_bit) == 1)
+				{
+					PORTB &= ~(1<<PB2); //digitalWrite(pinTx, LOW);
+				}
+				else
+				{
+					PORTB |= (1<<PB2);//digitalWrite(pinTx, HIGH),
+				}*/
+
+				bit_test = false;
+				tx_bit--;
+			}
 
 		}
 		if (tx_bit < 0){
@@ -207,10 +232,11 @@ void timerInterrupt(){
 			tx_sample = 0 ;
 		}
 		if(tx_index > frameToSendLength && tx_sample == 0){
-			transmission_on=false;
-			digitalWrite(pinTx, LOW);
+			PORTB &= ~(1<<PB2);//digitalWrite(pinTx, LOW);
+			//PORTB &= ~(1<<PB5);
 			digitalWrite(pinLed, LOW);
-			digitalWrite(5, HIGH);
+			PORTD |= (1<<PD5);//digitalWrite(5, HIGH);
+			transmission_on=false;
 		}
 	}
 }
@@ -240,10 +266,10 @@ void ydle::readEEProm()
 #endif
 	}
 	else{
-		#ifdef _YDLE_DEBUG
+#ifdef _YDLE_DEBUG
 		log("NODE IS NOT INIT");
 		log("No config in EEprom");
-		#endif
+#endif
 		m_initializedState = false;
 		memset((void*)&m_Config,0,sizeof(m_Config));
 	}
@@ -253,13 +279,13 @@ void ydle::readEEProm()
 void ydle::writeEEProm()
 {
 	eeprom_write_block((void*)&m_Config,0, sizeof(m_Config));
-	#ifdef _YDLE_DEBUG
+#ifdef _YDLE_DEBUG
 	log("Enregistrement du signal reçu comme signal de réference");
-	#endif
+#endif
 }
 
 uint8_t ydle::crc8(const uint8_t* buf, uint8_t length) {
-// The inital and final constants as used in the ATM HEC.
+	// The inital and final constants as used in the ATM HEC.
 	const uint8_t initial = 0x00;
 	const uint8_t final = 0x55;
 	uint8_t crc = initial;
@@ -295,7 +321,7 @@ unsigned char ydle::computeCrc(Frame_t* frame){
 
 uint8_t  ydle::receive(){
 	unsigned char crc_p;
-	
+
 	if(frameReadyToBeRead){
 		for(int i = 0; i < (int)pFrame; i++){
 			crc_p = computeCrc(&g_frameBuffer[i]);
@@ -316,12 +342,14 @@ uint8_t  ydle::receive(){
 				{
 					handleReceivedFrame(&g_frameBuffer[i]);
 #ifdef _YDLE_DEBUG
-					printFrame(&g_frameBuffer[i]);
+					//printFrame(&g_frameBuffer[i]);
 #endif // _YDLE_DEBUG
 				}else if(g_frameBuffer[i].type == YDLE_TYPE_ACK){
+#ifdef _YDLE_DEBUG
 					Serial.println("ACK received");
+#endif // _YDLE_DEBUG
 					if(g_frameBuffer[i].sender == g_sendFrameBuffer.receptor 
-						&& g_frameBuffer[i].receptor == g_sendFrameBuffer.sender){
+							&& g_frameBuffer[i].receptor == g_sendFrameBuffer.sender){
 						wait_ack = 0;
 						retry = 0;
 						last_check = 0;
@@ -367,64 +395,110 @@ uint8_t  ydle::receive(){
 	}
 }
 
+bool ydle::isCmdON()
+{
+    return cmdON;
+}
+ bool ydle::isCmdOFF()
+{
+    return cmdOFF;
+}
+ bool ydle::isCmdSet()
+{
+    return cmdSet;
+}
+bool ydle::isCmdAskData()
+{
+    return cmdAskData;
+}
 // Do something with a received Command
 void ydle::handleReceivedFrame(Frame_t *frame)
 {
-	int litype;
-	long livalue;
-	Serial.println("I'm here");
-	//Special case for CMD_LINK
-	if(this->extractData(frame, 0,litype, livalue)==1)
+	uint8_t * pData = frame->data ;
+
+	sReceivedCommand * p = (sReceivedCommand *)pData ;
+
+	receivedCommand = p->cmd ;
+	receivednid = p->nid;
+        
+        cmdON = false;
+        cmdOFF = false;
+        cmdSet = false;
+        cmdAskData = false;
+       
+
+	if(checkSignal(frame))
 	{
-		#ifdef _YDLE_DEBUG
-		log("Type of  Message Received ",litype);
-		#endif
-		//A node ask to link us
-		if(litype == YDLE_CMD_LINK)
+            isRead =false ;
+            delay(1000);
+#ifdef _YDLE_DEBUG
+		log("**************Send ACK********************");
+#endif
+		Frame_t response;
+		memset(&response, 0x0, sizeof(response));
+		dataToFrame(&response, YDLE_TYPE_ACK);	// Create a new ACK Frame
+#ifdef _YDLE_DEBUG
+		printFrame(&response);
+		Serial.println("End send ack");
+#endif
+		send(&response);
+                
+	}
+
+	if (receivedCommand == YDLE_CMD_LINK){
+#ifdef _YDLE_DEBUG
+		log("Link received ",receivedCommand);
+#endif
+		// we are not already linked
+		if(!m_initializedState)
 		{
-			#ifdef _YDLE_DEBUG
-			log("Link received ",litype);
-			#endif
-			// we are not already linked
-			if(!m_initializedState)
-			{
-				m_Config.IdNode = frame->receptor;
-				m_Config.IdMaster = frame->sender;
-				m_initializedState = true;
-				writeEEProm();
-			}
+			m_Config.IdNode = frame->receptor;
+			m_Config.IdMaster = frame->sender;
+			m_initializedState = true;
+			writeEEProm();
 		}
-		else if(litype==YDLE_CMD_RESET)
-		{
-			
-			if (checkSignal(frame))
-			{
-				#ifdef _YDLE_DEBUG
-				log("Reset received ",litype);
-				#endif
-				m_Config.IdNode = 0;
-				m_Config.IdMaster = 0;
-				writeEEProm();
-				m_initializedState = false;
-			}
-		}
-		
-		// send ACK if frame is for us.
-		if(checkSignal(frame))
-		{
-			delay(1000);
-			#ifdef _YDLE_DEBUG
-			log("**************Send ACK********************");
-			#endif
-			Frame_t response;
-			memset(&response, 0x0, sizeof(response));
-			dataToFrame(&response, YDLE_TYPE_ACK);	// Create a new ACK Frame
-			#ifdef _YDLE_DEBUG
-			printFrame(&response);
-			Serial.println("End send ack");
-			#endif
-			send(&response);
-		}
+	}
+	else if(receivedCommand == YDLE_CMD_ON && checkSignal(frame))
+	{
+#ifdef _YDLE_DEBUG
+		log("YDLE_CMD_ON");
+#endif
+		cmdON = true;
+	}
+	else if(receivedCommand == YDLE_CMD_OFF && checkSignal(frame))
+	{
+#ifdef _YDLE_DEBUG
+		Serial.println("YDLE_CMD_OFF");
+#endif
+		cmdOFF = true ;
+	}
+        else if(receivedCommand == YDLE_CMD_SET && checkSignal(frame))
+	{
+#ifdef _YDLE_DEBUG
+		Serial.println("YDLE_CMD_SET");
+#endif
+                cmdSet = true ;
+	}
+	else if(receivedCommand == YDLE_CMD_RESET && checkSignal(frame))
+	{
+#ifdef _YDLE_DEBUG
+		Serial.println("YDLE_CMD_RESET");
+#endif
+#ifdef _YDLE_DEBUG
+		//log("Reset received ",litype);
+		log("Reset received ");
+#endif
+		m_Config.IdNode = 0;
+		m_Config.IdMaster = 0;
+		writeEEProm();
+		m_initializedState = false;
+	}
+	else if (receivedCommand == YDLE_CMD_ASKDATA && checkSignal(frame))
+	{
+#ifdef _YDLE_DEBUG
+		Serial.println("YDLE_CMD_ASKDATA");
+#endif
+		cmdAskData = true;
 	}
 }
 
@@ -433,6 +507,7 @@ uint8_t ydle::send(Frame_t *frame)
 {
 	int i = 0,j = 0;
 
+	//PORTB |= (1<<PB5);
 	digitalWrite(pinLed, HIGH);   // on allume la Led pour indiquer une émission
 
 	if(frame->type == YDLE_TYPE_STATE_ACK){
@@ -480,6 +555,7 @@ uint8_t ydle::send(Frame_t *frame)
 	tx_index = 0;
 	tx_bit = 7;
 
+	PORTB &= ~(1<<PB5);
 	digitalWrite(5, LOW);
 	transmission_on = true;
 }
@@ -489,7 +565,7 @@ bool ydle::checkSignal(Frame_t *frame)
 {
 	if(frame->sender==m_Config.IdMaster && frame->receptor==m_Config.IdNode)
 		return true;
- 	else
+	else
 		return false;
 }
 
@@ -501,7 +577,7 @@ void pll()
 	if (sample_value){
 		sample_sum++;
 	}
-	
+
 	// On vérifie s'il y a eu une transition de bit
 	if (sample_value != last_sample_value){
 		// Transition, en avance si la rampe > 40, en retard si < 40
@@ -517,7 +593,7 @@ void pll()
 		// Si pas de transition, on avance la rampe de 20 (= 80/4 samples)
 		pll_ramp += 20;
 	}
-	
+
 	// On vérifie si la rampe é atteint son maximum de 80
 	if (pll_ramp >= 160)
 	{
@@ -525,7 +601,7 @@ void pll()
 		// On ajoute aux 16 derniers bits reéus rx_bits, MSB first
 		// On stock les 16 derniers bits
 		rx_bits <<= 1;
-		
+
 		// On vérifie la somme des samples sur la période pour savoir combien était é l'état haut
 		// S'ils étaient < 2, on déclare un 0, sinon un 1;
 		if (sample_sum >= 5){
@@ -573,7 +649,7 @@ void pll()
 					m_data[(bit_count-48)/16]|= bit_value;
 				}
 			}
-			
+
 			// Quand on a reéu les 24 premiers bits, on connait la longueur de la trame
 			// On vérifie alors que la longueur semble logique
 			if (bit_count >= 48)
@@ -690,15 +766,15 @@ int ydle::isSignal()
 
 	   Outputs: 
 
-*/
+ */
 // ----------------------------------------------------------------------------
-void ydle::addCmd(Frame_t *frame, int type, int data)
+/*void ydle::addCmd(Frame_t *frame, int type, int data)
 {
 	frame->data[frame->taille]=type<<4;
 	frame->data[frame->taille+1]=data;
 	frame->taille+=2;
 }
-
+ */
 // ----------------------------------------------------------------------------
 /**
 	   Function: extractData
@@ -708,9 +784,9 @@ void ydle::addCmd(Frame_t *frame, int type, int data)
 
 	   Outputs: 1 value trouve,0 non trouve,-1 no data
 
-*/
+ */
 // ----------------------------------------------------------------------------
-int ydle::extractData(Frame_t *frame, int index, int &itype, long &ivalue)
+/*int ydle::extractData(Frame_t *frame, int index, int &itype, long &ivalue)
 {
 	uint8_t* ptr;
 	bool bifValueisNegativ=false;
@@ -720,16 +796,16 @@ int ydle::extractData(Frame_t *frame, int index, int &itype, long &ivalue)
 	int  iNbByteRest;
 
 	ptr=frame->data;
-	
+
 	if(frame->taille <2) // Min 1 byte of data with the 1 bytes CRC always present, else there is no data
 	 return -1;
-	
+
 	iNbByteRest= frame->taille-1;
 	while (!bEndOfData)
 	{
 		itype=*ptr>>4;
 		bifValueisNegativ=false;
-		
+
 		// This is a very ugly code :-( Must do something better
 		if( frame->type==YDLE_TYPE_CMD)
 		{
@@ -791,12 +867,12 @@ int ydle::extractData(Frame_t *frame, int index, int &itype, long &ivalue)
 				iNbByteRest-=3;	
 			break;	
 		}
-		
+
 		if (index==iCurrentValueIndex)
 			return 1;
-		
+
 		iCurrentValueIndex++;
-		
+
 		if(iNbByteRest<1)
 			bEndOfData =true;;
 	}
@@ -804,14 +880,14 @@ int ydle::extractData(Frame_t *frame, int index, int &itype, long &ivalue)
 	return 0;	
 }
 
-
+ */
 union _FP16 ydle::floatToHalf(float number){
 	union _FP16 o = { 0 };
 	union _FP32 f;
 	f.f = number;
 	// Based on ISPC reference code (with minor modifications)
 	if (f.Exponent == 0) // Signed zero/denormal (which will underflow)
-	o.Exponent = 0;
+		o.Exponent = 0;
 	else if (f.Exponent == 255) // Inf or NaN (all exponent bits set)
 	{
 		o.Exponent = 31;
@@ -822,7 +898,7 @@ union _FP16 ydle::floatToHalf(float number){
 		// Exponent unbias the single, then bias the halfp
 		int newexp = f.Exponent - 127 + 15;
 		if (newexp >= 31) // Overflow, return signed infinity
-		o.Exponent = 31;
+			o.Exponent = 31;
 		else if (newexp <= 0) // Underflow
 		{
 			if ((14 - newexp) <= 24) // Mantissa might be non-zero
@@ -830,7 +906,7 @@ union _FP16 ydle::floatToHalf(float number){
 				uint16_t mant = f.Mantissa | 0x800000; // Hidden 1 bit
 				o.Mantissa = mant >> (14 - newexp);
 				if ((mant >> (13 - newexp)) & 1) // Check for rounding
-				o.u++; // Round, might overflow into exp bit, but this is OK
+					o.u++; // Round, might overflow into exp bit, but this is OK
 			}
 		}
 		else
@@ -838,18 +914,18 @@ union _FP16 ydle::floatToHalf(float number){
 			o.Exponent = newexp;
 			o.Mantissa = f.Mantissa >> 13;
 			if (f.Mantissa & 0x1000) // Check for rounding
-			o.u++; // Round, might overflow to inf, this is OK
+				o.u++; // Round, might overflow to inf, this is OK
 		}
 	}
-	            
+
 	o.Sign = f.Sign;
 	return o;
 }
 
-void ydle::addData(Frame_t *frame, float data){
+/*void ydle::addData(Frame_t *frame, float data){
 	union _FP16 h_data = this->floatToHalf(data);
 	int current_index = frame->taille;
-		
+
 	frame->data[current_index] = ((0xFF00) & h_data.u) >> 8;
 	++current_index;
 	frame->data[current_index] = ((0xFF) & h_data.u);
@@ -875,9 +951,9 @@ void ydle::addData(Frame_t *frame, int data){
 
 	   Outputs: 
 
-*/
+ */
 // ----------------------------------------------------------------------------
-void ydle::addData(Frame_t * frame, int type, float fdata)
+/*void ydle::addData(Frame_t * frame, int type, float fdata)
 {
 	int oldindex = frame->taille;
 	int data;
@@ -966,6 +1042,7 @@ void ydle::addData(Frame_t * frame, int type, float fdata)
 		break;	
 	}
 }
+ */
 // Affiche les logs sur la console série
 void ydle::log(String msg)
 {
@@ -990,40 +1067,40 @@ void ydle::log(String msg,int i)
 
 	   Outputs: 
 		Log a frame if debug activated
-*/
+ */
 // ----------------------------------------------------------------------------
 void ydle::printFrame(Frame_t *trame)
 {
 #if not defined( __AVR_ATtiny85__ ) or defined (_YDLE_DEBUG)
 	// if debug
-		char sztmp[255];
-		
-		log("-----------------------------------------------");
-		sprintf(sztmp,"Emetteur :%d",trame->sender);
-		log(sztmp);
+	char sztmp[255];
 
-		sprintf(sztmp,"Recepteur :%d",trame->receptor);
-		log(sztmp);
+	log("-----------------------------------------------");
+	sprintf(sztmp,"Emetteur :%d",trame->sender);
+	log(sztmp);
 
-		sprintf(sztmp,"Type :%d",trame->type);
-		log(sztmp);
+	sprintf(sztmp,"Recepteur :%d",trame->receptor);
+	log(sztmp);
 
-		sprintf(sztmp,"Taille :%d",trame->taille);
-		log(sztmp);
+	sprintf(sztmp,"Type :%d",trame->type);
+	log(sztmp);
 
-		sprintf(sztmp,"CRC :%d",trame->crc);
-		log(sztmp);
+	sprintf(sztmp,"Taille :%d",trame->taille);
+	log(sztmp);
 
-		sprintf(sztmp,"Data Hex: ");
-		for (int a=0;a<trame->taille-1;a++)
-			sprintf(sztmp,"%s 0x%02X",sztmp,trame->data[a]);
-		log(sztmp);
+	sprintf(sztmp,"CRC :%d",trame->crc);
+	log(sztmp);
 
-		sprintf(sztmp,"Data Dec: ");
-		for (int a=0;a<trame->taille-1;a++)
-			sprintf(sztmp,"%s %d",sztmp,trame->data[a]);
-		log(sztmp);
-		log("-----------------------------------------------");
+	sprintf(sztmp,"Data Hex: ");
+	for (int a=0;a<trame->taille-1;a++)
+		sprintf(sztmp,"%s 0x%02X",sztmp,trame->data[a]);
+	log(sztmp);
+
+	sprintf(sztmp,"Data Dec: ");
+	for (int a=0;a<trame->taille-1;a++)
+		sprintf(sztmp,"%s %d",sztmp,trame->data[a]);
+	log(sztmp);
+	log("-----------------------------------------------");
 #endif
 }
 
